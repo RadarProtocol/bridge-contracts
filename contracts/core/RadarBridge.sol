@@ -129,6 +129,7 @@ contract RadarBridge {
     ) external {
         require(isSupportedToken[_token], "Token not supported");
         require(IERC20(_token).balanceOf(msg.sender) >= _amount, "Not enough tokens");
+        require(_destChain != CHAIN, "Cannot send to same chain");
 
         bytes32 _tokenId = tokenToId[_token];
         bool _handlerType = tokenToHandlerType[_token];
