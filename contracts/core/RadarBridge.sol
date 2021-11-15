@@ -54,6 +54,7 @@ contract RadarBridge {
     // TODO: TEST
     function initialize(bytes32 _chain) public {
         require(owner == address(0), "Contract already initialized");
+        require(implementation() != address(0), "Only delegates can call this");
         CHAIN = _chain;
         owner = msg.sender;
     }
@@ -147,7 +148,7 @@ contract RadarBridge {
         if (feeManager != address(0)) {
             uint256 _userFee;
             uint256 _feeBase;
-            
+
             // Use try/catch to prvevent rogue bridge locking
             try IRadarBridgeFeeManager(feeManager).getBridgeFee(_token, msg.sender, _amount, _destChain, _destAddress) returns (uint256 _val) {
                 _userFee = _val;

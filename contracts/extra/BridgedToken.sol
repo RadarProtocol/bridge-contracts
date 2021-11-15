@@ -7,7 +7,7 @@ contract BridgedToken is ERC20 {
 
     address private migrationAuthority;
     address private pendingMigratorAuthority;
-    address private bridge;
+    address private immutable bridge;
 
     modifier onlyMinter() {
         require(msg.sender == bridge || msg.sender == migrationAuthority, "Unauthorized");
@@ -21,6 +21,7 @@ contract BridgedToken is ERC20 {
         address _bridge,
         bool hasMigration
     ) ERC20(name, symbol, decimals) {
+        require(_bridge != address(0), "Bridge cannot be addresss 0");
         bridge = _bridge;
         if (hasMigration) {
             migrationAuthority = msg.sender;

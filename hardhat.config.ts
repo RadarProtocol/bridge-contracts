@@ -74,6 +74,13 @@ const config: HardhatUserConfig = {
       timeout: 259200000,
       gasPrice: 130000000000,
       gasMultiplier: 1.1
+    },
+    dev: {
+      accounts: {
+        mnemonic,
+        count: 5
+      },
+      url: "http://localhost:8545"
     }
   },
 };
