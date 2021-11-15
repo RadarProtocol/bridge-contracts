@@ -5,6 +5,7 @@ import "../extra/IBridgedToken.sol";
 import "./utils/SignatureLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./IRadarBridgeFeeManager.sol";
 
 contract RadarBridge {
 
@@ -12,6 +13,7 @@ contract RadarBridge {
 
     address private owner;
     address private pendingOwner;
+    address private feeManager;
     bytes32 private CHAIN;
 
     mapping(bytes32 => bool) private doubleSpendingProtection;
@@ -30,7 +32,9 @@ contract RadarBridge {
         uint256 amount,
         bytes32 destinationChain,
         address destinationAddress,
-        uint256 timestamp
+        uint256 timestamp,
+        uint256 feeAmount,
+        uint256 receiveAmount
     );
     event TokensClaimed(
         bytes32 tokenId,
@@ -118,6 +122,11 @@ contract RadarBridge {
         // Change Router
         idToRouter[_tokenId] = _newRouter;
     }
+
+    // TODO: TEST
+    function changeFeeManager(address _newFeeManager) external onlyOwner {
+        feeManager = _newFeeManager;
+    }
     
     // Bridge Functions
     // TODO: TEST
@@ -133,17 +142,57 @@ contract RadarBridge {
 
         bytes32 _tokenId = tokenToId[_token];
         bool _handlerType = tokenToHandlerType[_token];
+        uint256 _fee = 0;
+
+        if (feeManager != address(0)) {
+            uint256 _userFee;
+            uint256 _feeBase;
+            
+            // Use try/catch to prvevent rogue bridge locking
+            try IRadarBridgeFeeManager(feeManager).getBridgeFee(_token, msg.sender, _amount, _destChain, _destAddress) returns (uint256 _val) {
+                _userFee = _val;
+            } catch {
+                _userFee = 0;
+            }
+
+            if (_userFee != 0) {
+                try IRadarBridgeFeeManager(feeManager).getFeeBase() returns (uint256 _val2) {
+                    _feeBase = _val2;
+                } catch {
+                    _feeBase = 0;
+                }
+                
+                // fee cannot be larger than 10%
+                if (_feeBase != 0 && (_userFee * 10) <= _feeBase) {
+                    _fee = (_amount * _userFee) / _feeBase;
+                }
+            }
+        }
 
         // Transfer tokens
         if (_handlerType) {
             // burn
             IBridgedToken(_token).burn(msg.sender, _amount);
+            if (_fee != 0) {
+                IBridgedToken(_token).mint(feeManager, _fee);
+            }
         } else {
             // transfer
             IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
+            if (_fee != 0) {
+                IERC20(_token).safeTransfer(feeManager, _fee);
+            }
         }
 
-        emit TokensBridged(_tokenId, _amount, _destChain, _destAddress, block.timestamp);
+        emit TokensBridged(
+            _tokenId,
+            _amount,
+            _destChain,
+            _destAddress,
+            block.timestamp,
+            _fee,
+            _amount-_fee
+        );
     }
 
     // TODO: TEST
@@ -195,6 +244,10 @@ contract RadarBridge {
 
     function getChain() external view returns (bytes32) {
         return CHAIN;
+    }
+
+    function getFeeManager() external view returns (address) {
+        return feeManager;
     }
     
     function implementation() public view returns (address radarBridge_) {
