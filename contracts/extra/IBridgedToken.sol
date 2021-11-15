@@ -5,6 +5,10 @@ interface IBridgedToken {
 
     function getBridge() external view returns (address);
 
+    function getMigrator() external view returns (address);
+
+    function acceptMigratorAuthority() external;
+
     function mint(address, uint256) external;
 
     function burn(address, uint256) external;
