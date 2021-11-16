@@ -7,9 +7,9 @@ library SignatureLibrary {
     function getEthSignedMessageHash(bytes32 _messageHash) internal pure returns (bytes32) {
         /*
         Signature is produced by signing a keccak256 hash with the following format:
-        "\x19Radar Bridge Signed Message:\n" + len(msg) + msg
+        "\x19Ethereum Signed Message:\n" + len(msg) + msg
         */
-        return keccak256(abi.encodePacked("\x19Radar Bridge Signed Message:\n32", _messageHash));
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash));
     }
 
     /* 4. Verify signature

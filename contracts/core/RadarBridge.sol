@@ -24,6 +24,8 @@ contract RadarBridge {
     mapping(address => bytes32) private tokenToId;
     mapping(bytes32 => address) private idToRouter;
 
+    address[] private supportedTokens;
+
     event SupportedTokenAdded(address token, bool handlerType, bytes32 tokenId, address router);
     event SupportedTokenRemoved(address token, bytes32 tokenId);
 
@@ -51,7 +53,6 @@ contract RadarBridge {
     }
 
     // Management
-    // TODO: TEST
     function initialize(bytes32 _chain) public {
         require(owner == address(0), "Contract already initialized");
         require(implementation() != address(0), "Only delegates can call this");
@@ -93,6 +94,7 @@ contract RadarBridge {
         }
 
         isSupportedToken[_token] = true;
+        supportedTokens.push(_token);
         tokenToHandlerType[_token] = _handlerType;
         tokenToId[_token] = _tokenID;
         idToToken[_tokenID] = _token;
@@ -105,6 +107,16 @@ contract RadarBridge {
         require(isSupportedToken[_token], "Token is not supported");
 
         isSupportedToken[_token] = false;
+        uint256 _length = supportedTokens.length;
+        for (uint256 i = 0; i < _length; i++) {
+            if (supportedTokens[i] == _token) {
+                if (i < _length - 1) {
+                    supportedTokens[i] = supportedTokens[_length - 1];
+                }
+                supportedTokens.pop();
+                break;
+            }
+        }
         bytes32 _tokenId = tokenToId[_token];
         tokenToId[_token] = "";
         idToToken[_tokenId] = address(0);
@@ -117,7 +129,7 @@ contract RadarBridge {
         require(isSupportedToken[idToToken[_tokenId]], "Token not supported");
 
         // Verify Signature
-        bytes32 message = keccak256(abi.encodePacked(bytes32("PASS OWNERSHIP"), _tokenId, _newRouter));
+        bytes32 message = keccak256(abi.encodePacked(bytes32("PASS OWNERSHIP"), _tokenId, _newRouter, CHAIN));
         require(SignatureLibrary.verify(message, signature, idToRouter[_tokenId]) == true, "Invalid Signature");
 
         // Change Router
@@ -273,5 +285,13 @@ contract RadarBridge {
 
     function getTokenById(bytes32 _id) external view returns (address) {
         return idToToken[_id];
+    }
+
+    function getSupportedTokensLength() external view returns (uint) {
+        return supportedTokens.length;
+    }
+
+    function getSupportedTokenByIndex(uint _index) external view returns (address) {
+        return supportedTokens[_index];
     }
 }

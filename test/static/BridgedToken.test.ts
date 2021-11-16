@@ -1,6 +1,5 @@
 import { expect } from "chai";
-import exp from "constants";
-import { ethers, ContractFactory } from "ethers";
+import { ethers } from "ethers";
 import { BridgedToken__factory } from "../../typechain";
 
 const snapshot = async (migratorToken: boolean) => {

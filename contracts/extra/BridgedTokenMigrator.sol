@@ -32,7 +32,6 @@ contract BridgedTokenMigrator {
     function migrateTokens() external {
         uint256 _bal = IERC20(oldToken).balanceOf(msg.sender);
         IERC20(oldToken).safeTransferFrom(msg.sender, address(this), _bal);
-        IERC20(oldToken).safeTransfer(address(0), _bal);
 
         leftToMigrate = leftToMigrate - _bal;
 
