@@ -4,8 +4,8 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { DeploymentConfig, saveConfig } from '../utils/config';
 
 const isDevDeploy = true;
-
 const ENABLED = false;
+
 const DEPLOYMENT_TYPE = "CORE";
 const NETWORK = 56;
 const BridgeChainID = "BSC";

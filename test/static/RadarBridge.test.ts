@@ -6,7 +6,7 @@ const generateBridgeSignature = async (
     signer: ethers.Wallet,
     signData: string
 ): Promise<string> => {
-    const messageBytes = ethers.utils.arrayify(ethers.utils.keccak256(signData));
+    const messageBytes = ethers.utils.arrayify(signData);
     const signature = await signer.signMessage(messageBytes);
     return signature;
 }
@@ -17,8 +17,7 @@ const getNewRouterSignature = async (
     _newRouter: string,
     _chain: string
 ): Promise<string> => {
-    const abiCoder = new ethers.utils.AbiCoder();
-    const signData = abiCoder.encode(["bytes32", "bytes32", "address", "bytes32"], [
+    const signData = ethers.utils.solidityKeccak256(["bytes32", "bytes32", "address", "bytes32"], [
         ethers.utils.formatBytes32String("PASS OWNERSHIP"),
         ethers.utils.formatBytes32String(_tokenId),
         _newRouter,
@@ -256,11 +255,93 @@ describe("Radar Bridge", () => {
         );
 
     });
+    it("Pass Ownership", async () => {
+        const {
+            deployer,
+            ethBridge,
+            bscBridge,
+            ethTokenHolder // Use as random user
+        } = await snapshot();
+
+        // Check Owner
+        const getOwnerCallBeforeETH = await ethBridge.getOwner();
+        const getOwnerCallBeforeBSC = await bscBridge.getOwner();
+        expect(getOwnerCallBeforeETH).to.equal(deployer.address);
+        expect(getOwnerCallBeforeBSC).to.equal(deployer.address);
+
+        // Pass Owner
+        await ethBridge.connect(deployer).sendOwnership(ethTokenHolder.address);
+        await bscBridge.connect(deployer).sendOwnership(ethTokenHolder.address);
+        await ethBridge.connect(ethTokenHolder).acceptOwnership();
+        await bscBridge.connect(ethTokenHolder).acceptOwnership();
+
+        // Check Owner
+        const getOwnerCallAfterETH = await ethBridge.getOwner();
+        const getOwnerCallAfterBSC = await bscBridge.getOwner();
+        expect(getOwnerCallAfterETH).to.equal(ethTokenHolder.address);
+        expect(getOwnerCallAfterBSC).to.equal(ethTokenHolder.address);
+
+        // AC on Pass Owner
+        await expect(ethBridge.connect(deployer).sendOwnership(ethers.constants.AddressZero)).to.be.revertedWith(
+            "Unauthorized"
+        );
+        await expect(bscBridge.connect(deployer).sendOwnership(ethers.constants.AddressZero)).to.be.revertedWith(
+            "Unauthorized"
+        );
+
+        await ethBridge.connect(ethTokenHolder).sendOwnership(deployer.address);
+        await bscBridge.connect(ethTokenHolder).sendOwnership(deployer.address);
+    });
+    it("Upgrade Bridge Proxy", async () => {
+        const { deployer, ethBridge, bscBridge, ethBridgeLib, bscBridgeLib, bridgeFactory } = await snapshot();
+
+        const newBridgeLibETH = await bridgeFactory.deploy();
+        const newBridgeLibBSC = await bridgeFactory.deploy();
+
+        const getImplementationBeforeETH = await ethBridge.implementation();
+        const getImplementationBeforeBSC = await bscBridge.implementation();
+        expect(getImplementationBeforeETH).to.equal(ethBridgeLib.address);
+        expect(getImplementationBeforeBSC).to.equal(bscBridgeLib.address);
+        
+        await ethBridge.connect(deployer).upgrade(newBridgeLibETH.address);
+        await bscBridge.connect(deployer).upgrade(newBridgeLibBSC.address);
+
+        const getImplementationAfterETH = await ethBridge.implementation();
+        const getImplementationAfterBSC = await bscBridge.implementation();
+        expect(getImplementationAfterETH).to.equal(newBridgeLibETH.address);
+        expect(getImplementationAfterBSC).to.equal(newBridgeLibBSC.address);
+    });
+    it("Change Router for token", async () => {
+        const {
+            deployer,
+            ethBridge,
+            bscBridge,
+            router
+        } = await snapshot();
+
+        const tokenRouterSignatureETH = await getNewRouterSignature(router, "RADAR", ethers.constants.AddressZero, "ETH");
+        const tokenRouterSignatureBSC = await getNewRouterSignature(router, "RADAR", ethers.constants.AddressZero, "BSC");
+
+        await expect(ethBridge.connect(deployer).changeTokenRouter(ethers.utils.formatBytes32String("RADAR"), ethers.constants.AddressZero, tokenRouterSignatureBSC)).to.be.revertedWith(
+            "Invalid Signature"
+        );
+        await expect(bscBridge.connect(deployer).changeTokenRouter(ethers.utils.formatBytes32String("RADAR"), ethers.constants.AddressZero, tokenRouterSignatureETH)).to.be.revertedWith(
+            "Invalid Signature"
+        );
+
+        await ethBridge.connect(deployer).changeTokenRouter(ethers.utils.formatBytes32String("RADAR"), ethers.constants.AddressZero, tokenRouterSignatureETH);
+        await bscBridge.connect(deployer).changeTokenRouter(ethers.utils.formatBytes32String("RADAR"), ethers.constants.AddressZero, tokenRouterSignatureBSC);
+
+        await expect(ethBridge.connect(deployer).changeTokenRouter(ethers.utils.formatBytes32String("RADAR"), ethers.constants.AddressZero, tokenRouterSignatureETH)).to.be.revertedWith(
+            "Invalid Signature"
+        );
+        await expect(bscBridge.connect(deployer).changeTokenRouter(ethers.utils.formatBytes32String("RADAR"), ethers.constants.AddressZero, tokenRouterSignatureBSC)).to.be.revertedWith(
+            "Invalid Signature"
+        );
+    });
+
     it("Bridge Tokens (ETH -> BSC)", async () => {});
     it("Bridge Tokens (BSC -> ETH)", async () => {});
-    it("Pass Ownership", async () => {});
-    it("Add and remove supported assets + bridge", async () => {});
-    it("Upgrade Bridge Proxy", async () => {});
     it("Bridge Fees with mock fee manager", async () => {});
-    it("Change Router for token", async () => {});
+    it("Add and remove supported assets + bridge", async () => {});
 });
