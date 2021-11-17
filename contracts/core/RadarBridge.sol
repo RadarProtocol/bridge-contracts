@@ -60,7 +60,6 @@ contract RadarBridge {
         owner = msg.sender;
     }
 
-    // TODO: TEST
     function upgrade(address _newRadarBridge) external onlyOwner {
         assembly {
             // solium-disable-line
@@ -71,20 +70,17 @@ contract RadarBridge {
         }
     }
 
-    // TODO: TEST
     function sendOwnership(address _newOwner) external onlyOwner {
         require(_newOwner != address(0), "Invalid Owner Address");
         pendingOwner = _newOwner;
     }
 
-    // TODO: TEST
     function acceptOwnership() external {
         require(msg.sender == pendingOwner, "Unauthorized");
         owner = pendingOwner;
         pendingOwner = address(0);
     }
 
-    // TODO: TEST
     function addSupportedToken(address _token, bool _handlerType, bytes32 _tokenID, address _router) external onlyOwner {
         require(!isSupportedToken[_token] && tokenToId[_token] == "", "Token already exists");
         require(idToToken[_tokenID] == address(0), "Token ID already being used");
@@ -102,7 +98,6 @@ contract RadarBridge {
         emit SupportedTokenAdded(_token, _handlerType, _tokenID, _router);
     }
 
-    // TODO: TEST
     function removeSupportedToken(address _token) external onlyOwner {
         require(isSupportedToken[_token], "Token is not supported");
 
@@ -124,7 +119,6 @@ contract RadarBridge {
         emit SupportedTokenRemoved(_token, _tokenId);
     }
 
-    // TODO: TEST
     function changeTokenRouter(bytes32 _tokenId, address _newRouter, bytes memory signature) external {
         require(isSupportedToken[idToToken[_tokenId]], "Token not supported");
 
@@ -136,13 +130,11 @@ contract RadarBridge {
         idToRouter[_tokenId] = _newRouter;
     }
 
-    // TODO: TEST
     function changeFeeManager(address _newFeeManager) external onlyOwner {
         feeManager = _newFeeManager;
     }
     
     // Bridge Functions
-    // TODO: TEST
     function bridgeTokens(
         address _token,
         uint256 _amount,
@@ -208,7 +200,6 @@ contract RadarBridge {
         );
     }
 
-    // TODO: TEST
     function claimTokens(
         bytes32 _tokenId,
         uint256 _amount,
