@@ -606,6 +606,7 @@ describe("Radar Bridge", () => {
             ethTokenHolder.address
         );
         const bridgeReceipt = await bridgeTx.wait();
+        console.log(bridgeReceipt);
 
         const lockedEvent = bridgeReceipt.events![bridgeReceipt.events!.length-1];
         const signature = await getBridgeSignature(

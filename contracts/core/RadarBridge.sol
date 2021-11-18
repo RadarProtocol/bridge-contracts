@@ -17,6 +17,7 @@ contract RadarBridge {
     bytes32 private CHAIN;
 
     mapping(bytes32 => bool) private doubleSpendingProtection;
+    mapping(bytes32 => bool) private nonceDoubleSpendingProtection;
 
     mapping(address => bool) private isSupportedToken;
     mapping(address => bool) private tokenToHandlerType; // 0 - transfers, 1 - mint/burn, BridgedToken
@@ -225,9 +226,11 @@ contract RadarBridge {
             _destAddress
         ));
         require(doubleSpendingProtection[message] == false, "Double Spending");
+        require(nonceDoubleSpendingProtection[_nonce] == false, "Nonce Double Spending");
         require(SignatureLibrary.verify(message, _signature, idToRouter[_tokenId]) == true, "Router Signature Invalid");
 
         doubleSpendingProtection[message] = true;
+        nonceDoubleSpendingProtection[_nonce] = true;
 
         bool _handlerType = tokenToHandlerType[_token];
 
