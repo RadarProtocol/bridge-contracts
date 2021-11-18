@@ -391,6 +391,7 @@ describe("Radar Bridge", () => {
             bscTokenHolder.address
         );
         const bridgeReceipt = await bridgeTx.wait();
+        console.log(`With fee 0% (BSC -> ETH): contract ${bscBridge.address} and tx: ${bridgeReceipt.transactionHash}`);
 
         const lockedEvent = bridgeReceipt.events![bridgeReceipt.events!.length-1];
         const signature = await getBridgeSignature(
@@ -495,6 +496,7 @@ describe("Radar Bridge", () => {
             ethTokenHolder.address
         );
         const bridgeReceipt = await bridgeTx.wait();
+        console.log(`With fee 0% (ETH -> BSC): contract ${ethBridge.address} and tx: ${bridgeReceipt.transactionHash}`);
 
         const lockedEvent = bridgeReceipt.events![bridgeReceipt.events!.length-1];
         const signature = await getBridgeSignature(
@@ -606,7 +608,7 @@ describe("Radar Bridge", () => {
             ethTokenHolder.address
         );
         const bridgeReceipt = await bridgeTx.wait();
-        console.log(bridgeReceipt);
+        console.log(`With fee 5% (ETH -> BSC): contract ${ethBridge.address} and tx: ${bridgeReceipt.transactionHash}`);
 
         const lockedEvent = bridgeReceipt.events![bridgeReceipt.events!.length-1];
         const signature = await getBridgeSignature(
@@ -696,6 +698,7 @@ describe("Radar Bridge", () => {
             bscTokenHolder.address
         );
         const bridgeReceipt = await bridgeTx.wait();
+        console.log(`With fee 5% (BSC -> ETH): contract ${bscBridge.address} and tx: ${bridgeReceipt.transactionHash}`);
 
         const lockedEvent = bridgeReceipt.events![bridgeReceipt.events!.length-1];
         const signature = await getBridgeSignature(
@@ -750,5 +753,17 @@ describe("Radar Bridge", () => {
         );
         const bscTokenBalanceAfterClaim = await ethToken.balanceOf(bscTokenHolder.address);
         expect(bscTokenBalanceAfterClaim).to.equal(ethers.utils.parseEther('95'));
+    });
+
+    it("For other tests", async () => {
+        const {
+            ethBridge,
+            bscBridge,
+            ethTokenHolder,
+            bscTokenHolder,
+            ethToken,
+            bscToken,
+            deployer
+        } = await snapshot();
     });
 });

@@ -3,7 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 
 import { DeploymentConfig, saveConfig } from '../utils/config';
 
-const isDevDeploy = true;
+const isDevDeploy = false;
 const ENABLED = false;
 
 const DEPLOYMENT_TYPE = "TOKEN_MIGRATION";
@@ -12,7 +12,7 @@ const BridgeChainID = "";
 const TokenName = "Radar";
 const TokenSymbol = "RADAR";
 const TokenDecimals = 18;
-const NetworkProxyBridgeAddress = "0xBEc49fA140aCaA83533fB00A2BB19bDdd0290f25";
+const NetworkProxyBridgeAddress = "0xBe0a25915acDD6eA0FE7F6EFC1C68a6a79fF9110";
 const TokenHasMigration = true;
 const OldTokenForMigration = "0xf9FBE825BFB2bF3E387af0Dc18caC8d87F29DEa8";
 

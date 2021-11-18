@@ -75,12 +75,26 @@ const config: HardhatUserConfig = {
       gasPrice: 130000000000,
       gasMultiplier: 1.1
     },
+    bsc: {
+      accounts: accounts('bsc'),
+      url: node('bsc'),
+      timeout: 259200000,
+      gasPrice: 10000000000,
+      gasMultiplier: 1.1
+    },
     dev: {
       accounts: {
         mnemonic,
         count: 5
       },
       url: "http://localhost:8545"
+    },
+    dev_bsc: {
+      accounts: {
+        mnemonic,
+        count: 5
+      },
+      url: "http://localhost:8546"
     }
   },
 };
