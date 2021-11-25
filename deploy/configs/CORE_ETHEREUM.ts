@@ -4,7 +4,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { DeploymentConfig, saveConfig } from '../utils/config';
 
 const isDevDeploy = false;
-const ENABLED = true;
+const ENABLED = false;
 
 const DEPLOYMENT_TYPE = "CORE";
 const NETWORK = 1;

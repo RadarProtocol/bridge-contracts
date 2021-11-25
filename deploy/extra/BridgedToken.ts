@@ -22,7 +22,7 @@ const fn: DeployFunction = async function (hre) {
           config.TokenHasMigration
       ],
       log: true,
-      skipIfAlreadyDeployed: false
+      skipIfAlreadyDeployed: true
   });
 
   log("TOKEN DEPLYOED! DON'T FORGET TO ADD TO MAIN BRIDGE ON ALL NETWORKS!");
