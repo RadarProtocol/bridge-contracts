@@ -83,6 +83,13 @@ const config: HardhatUserConfig = {
       gasPrice: 10000000000,
       gasMultiplier: 1.1
     },
+    polygon: {
+      accounts: accounts('polygon'),
+      url: node('polygon'),
+      timeout: 259200000,
+      gasPrice: 600000000000,
+      gasMultiplier: 1.1
+    },
     dev: {
       accounts: {
         mnemonic,
