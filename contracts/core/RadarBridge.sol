@@ -86,10 +86,6 @@ contract RadarBridge {
         require(!isSupportedToken[_token] && tokenToId[_token] == "", "Token already exists");
         require(idToToken[_tokenID] == address(0), "Token ID already being used");
 
-        if (_handlerType) {
-            require(IBridgedToken(_token).getBridge() == address(this), "Bridge doesn't have permissions on BridgedToken");
-        }
-
         isSupportedToken[_token] = true;
         supportedTokens.push(_token);
         tokenToHandlerType[_token] = _handlerType;
