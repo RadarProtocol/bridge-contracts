@@ -25,7 +25,7 @@ const fn: DeployFunction = async function (hre) {
       skipIfAlreadyDeployed: true
   });
 
-  log("TOKEN DEPLYOED! DON'T FORGET TO ADD TO MAIN BRIDGE ON ALL NETWORKS!");
+  log("TOKEN DEPLOYED! DON'T FORGET TO ADD TO MAIN BRIDGE ON ALL NETWORKS!");
 };
 
 fn.tags = ['Extra', 'BridgedToken'];

@@ -87,7 +87,7 @@ const config: HardhatUserConfig = {
       accounts: accounts('polygon'),
       url: node('polygon'),
       timeout: 259200000,
-      gasPrice: 600000000000,
+      gasPrice: 200000000000,
       gasMultiplier: 1.1
     },
     dev: {
