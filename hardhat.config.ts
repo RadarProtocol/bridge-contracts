@@ -97,6 +97,13 @@ const config: HardhatUserConfig = {
       gasPrice: 500000000000,
       gasMultiplier: 1.1
     },
+    avaxc: {
+      accounts: accounts('avaxc'),
+      url: node('avaxc'),
+      timeout: 259200000,
+      gasPrice: 25000000000,
+      gasMultiplier: 1.1
+    },
     dev: {
       accounts: {
         mnemonic,

@@ -17,3 +17,8 @@
 * BRIDGE LIB: `Not Yet Deployed`
 * BRIDGE: `Not Yet Deployed`
 * RADAR TOKEN: `Not Yet Deployed`
+
+## AVALANCHE C-CHAIN DEPLOYMENTS
+* BRIDGE LIB: `Not Yet Deployed`
+* BRIDGE: `Not Yet Deployed`
+* RADAR TOKEN: `Not Yet Deployed`
