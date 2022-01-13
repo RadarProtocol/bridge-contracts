@@ -104,6 +104,13 @@ const config: HardhatUserConfig = {
       gasPrice: 25000000000,
       gasMultiplier: 1.1
     },
+    moonbeam: {
+      accounts: accounts('moonbeam'),
+      url: node('moonbeam'),
+      timeout: 259200000,
+      gasPrice: 1000000000,
+      gasMultiplier: 1.1
+    },
     dev: {
       accounts: {
         mnemonic,
