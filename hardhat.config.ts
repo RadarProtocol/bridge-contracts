@@ -111,6 +111,13 @@ const config: HardhatUserConfig = {
       gasPrice: 100000000000,
       gasMultiplier: 1.1
     },
+    moonriver: {
+      accounts: accounts('moonriver'),
+      url: node('moonriver'),
+      timeout: 259200000,
+      gasPrice: 1000000000,
+      gasMultiplier: 1.1
+    },
     dev: {
       accounts: {
         mnemonic,
