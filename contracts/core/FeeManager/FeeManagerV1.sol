@@ -25,6 +25,7 @@ contract FeeManagerV1 is IRadarBridgeFeeManager {
         require(_tokens.length == _maxFees.length, "Invalid maxFees data");
 
         owner = msg.sender;
+        percentageFee = _percentageFee;
         for(uint8 i = 0; i < _tokens.length; i++) {
             maxTokenFee[_tokens[i]] = _maxFees[i];
         }
