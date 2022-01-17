@@ -60,7 +60,11 @@ contract FeeManagerV1 is IRadarBridgeFeeManager {
         uint256 _percFee = (_amount * percentageFee);
 
         if ((_percFee / FEE_BASE) > maxTokenFee[_token]) {
-            _percFee = (maxTokenFee[_token] * FEE_BASE) / _amount;
+            if (_amount != 0) {
+                _percFee = (maxTokenFee[_token] * FEE_BASE) / _amount;
+            } else {
+                _percFee = 0;
+            }
         }
 
         return _percFee;
