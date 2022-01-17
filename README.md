@@ -1,34 +1,86 @@
+# DEPLOYMENTS
 ## ETHEREUM DEPLOYMENTS
 * BRIDGE LIB: `0x82963cEA61fa4EEc54C923056Cd1654c2980aF38`
 * BRIDGE: `0xA735c1Ab7B20F71CB16E09014c88C51d0086732A`
+    - Fee Engine: `None`
+* FEE MANAGER V1: `Not Yet Deployed`
 
 ## BSC DEPLOYMENTS
 * BRIDGE LIB: `0xC33A9B8C0386E0De00Fe513652F13b0C3bF5dF44`
 * BRIDGE: `0xBe0a25915acDD6eA0FE7F6EFC1C68a6a79fF9110`
+    - Fee Engine: `None`
 * RADAR TOKEN: `0xf03a2dc374d494fbe894563fe22ee544d826aa50`
 * RADAR TOKEN MIGRATOR: `0xfd2b93ea4f7547eff73d08d889bedcc5164c1175`
+* FEE MANAGER V1: `Not Yet Deployed`
 
 ## POLYGON DEPLOYMENTS
 * BRIDGE LIB: `0xf9FBE825BFB2bF3E387af0Dc18caC8d87F29DEa8`
 * BRIDGE: `0x595762ed748884fb4578A3E45A95fA2471F04aE4`
+    - Fee Engine: `None`
 * RADAR TOKEN: `0x44d2B67187d539E83328aDe72A1b5f9512a74444`
+* FEE MANAGER V1: `Not Yet Deployed`
 
 ## FANTOM DEPLOYMENTS
 * BRIDGE LIB: `0xf9FBE825BFB2bF3E387af0Dc18caC8d87F29DEa8`
 * BRIDGE: `0x595762ed748884fb4578A3E45A95fA2471F04aE4`
+    - Fee Engine: `None`
 * RADAR TOKEN: `0x44d2B67187d539E83328aDe72A1b5f9512a74444`
+* FEE MANAGER V1: `Not Yet Deployed`
 
 ## AVALANCHE C-CHAIN DEPLOYMENTS
 * BRIDGE LIB: `0xf9FBE825BFB2bF3E387af0Dc18caC8d87F29DEa8`
 * BRIDGE: `0x595762ed748884fb4578A3E45A95fA2471F04aE4`
+    - Fee Engine: `None`
 * RADAR TOKEN: `0x44d2B67187d539E83328aDe72A1b5f9512a74444`
+* FEE MANAGER V1: `Not Yet Deployed`
 
 ## MOONBEAM DEPLOYMENTS
 * BRIDGE LIB: `0xf9FBE825BFB2bF3E387af0Dc18caC8d87F29DEa8`
 * BRIDGE: `0x595762ed748884fb4578A3E45A95fA2471F04aE4`
+    - Fee Engine: `None`
 * RADAR TOKEN: `0x44d2B67187d539E83328aDe72A1b5f9512a74444`
+* FEE MANAGER V1: `Not Yet Deployed`
 
 ## MOONRIVER DEPLOYMENTS
 * BRIDGE LIB: `0xf9FBE825BFB2bF3E387af0Dc18caC8d87F29DEa8`
 * BRIDGE: `0x595762ed748884fb4578A3E45A95fA2471F04aE4`
+    - Fee Engine: `None`
 * RADAR TOKEN: `0x44d2B67187d539E83328aDe72A1b5f9512a74444`
+* FEE MANAGER V1: `Not Yet Deployed`
+
+# FEES (FeeManagerV1)
+
+## ETHEREUM
+* (Not Production) RADAR: Whichever is lower than
+    - `50` RADAR
+    - `1%` of amount bridged
+
+## BSC
+* (Not Production) RADAR: Whichever is lower than
+    - `50` RADAR
+    - `1%` of amount bridged
+
+## POLYGON
+* (Not Production) RADAR: Whichever is lower than
+    - `50` RADAR
+    - `1%` of amount bridged
+
+## FANTOM
+* (Not Production) RADAR: Whichever is lower than
+    - `50` RADAR
+    - `1%` of amount bridged
+
+## AVALANCE C-CHAIN
+* (Not Production) RADAR: Whichever is lower than
+    - `50` RADAR
+    - `1%` of amount bridged
+
+## MOONBEAM
+* (Not Production) RADAR: Whichever is lower than
+    - `50` RADAR
+    - `1%` of amount bridged
+
+## MOONRIVER
+* (Not Production) RADAR: Whichever is lower than
+    - `50` RADAR
+    - `1%` of amount bridged
