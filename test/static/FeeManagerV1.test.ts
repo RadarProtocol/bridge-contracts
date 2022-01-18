@@ -1,6 +1,39 @@
 import { expect } from "chai";
-import { ethers } from "ethers";
-import { FeeManagerV1__factory, BridgedToken__factory } from "../../typechain";
+import { BigNumber, ethers } from "ethers";
+import { FeeManagerV1__factory, BridgedToken__factory, RadarBridgeProxy__factory, RadarBridge__factory } from "../../typechain";
+
+const generateBridgeSignature = async (
+    signer: ethers.Wallet,
+    signData: string
+): Promise<string> => {
+    const messageBytes = ethers.utils.arrayify(signData);
+    const signature = await signer.signMessage(messageBytes);
+    return signature;
+}
+
+const getBridgeSignature = async (
+    signer: ethers.Wallet,
+    _tokenId: string,
+    _amount: ethers.BigNumber,
+    _srcChain: string,
+    _destChain: string,
+    _nonce: string,
+    _destAddress: string,
+    _srcTimestamp: ethers.BigNumber
+): Promise<string> => {
+    const signData = ethers.utils.solidityKeccak256(["bytes32", "uint256", "bytes32", "bytes32", "uint256", "bytes32", "address"], [
+        ethers.utils.formatBytes32String(_tokenId),
+        _amount,
+        ethers.utils.formatBytes32String(_srcChain),
+        ethers.utils.formatBytes32String(_destChain),
+        _srcTimestamp,
+        ethers.utils.formatBytes32String(_nonce),
+        _destAddress
+    ]);
+    const sig = await generateBridgeSignature(signer, signData);
+
+    return sig;
+}
 
 const snapshot = async () => {
     const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
@@ -21,7 +54,7 @@ const snapshot = async () => {
     // CUSTOM
     const factory = new FeeManagerV1__factory(deployer)
     const feeManager = await factory.deploy(
-        100, // 1%
+        10000, // 1%
         [],
         []
     );
@@ -37,7 +70,8 @@ const snapshot = async () => {
         otherAddress1,
         otherAddress2,
         feeManager,
-        mockToken
+        mockToken,
+        tokenFactory
     }
 }
 
@@ -46,7 +80,7 @@ describe('FeeManagerV1', () => {
         const { feeManager, deployer } = await snapshot();
 
         const getFixedPercRate = await feeManager.getFixedPercRate();
-        expect(getFixedPercRate).to.eq(100);
+        expect(getFixedPercRate).to.eq(10000);
 
         const getMaxFeeForToken = await feeManager.getMaxFeeForToken(ethers.constants.AddressZero);
         expect(getMaxFeeForToken).to.eq(0);
@@ -94,12 +128,12 @@ describe('FeeManagerV1', () => {
     it('Change Percentage Fee', async () => {
         const { feeManager } = await snapshot();
 
-        await feeManager.changePercentageFee(1000);
+        await feeManager.changePercentageFee(100000);
 
         const getFee = await feeManager.getFixedPercRate();
-        expect(getFee).to.eq(1000);
+        expect(getFee).to.eq(100000);
 
-        await expect(feeManager.changePercentageFee(1000000)).to.be.revertedWith(
+        await expect(feeManager.changePercentageFee(1500000)).to.be.revertedWith(
             "Fee too big"
         );
     });
@@ -137,7 +171,180 @@ describe('FeeManagerV1', () => {
         const fmBal3 = await mockToken.balanceOf(feeManager.address);
         expect(fmBal3).to.eq(0);
     });
-    it.skip('Get Fee', async () => {});
-    it.skip('Get Fee Base', async () => {});
-    it.skip('Bridge with fee (max and fixed)', async () => {});
+    it('Get Fee', async () => {
+        const { feeManager, mockToken, otherAddress1 } = await snapshot();
+
+        // Without token registered
+        const noRegisterFee = await feeManager.getBridgeFee(
+            mockToken.address,
+            ethers.constants.AddressZero,
+            ethers.utils.parseEther('100'),
+            "0x4253430000000000000000000000000000000000000000000000000000000000",
+            ethers.constants.AddressZero
+        );
+        expect(noRegisterFee).to.eq(0);
+
+
+        // Max Fee set, but get 1%
+        await feeManager.changePercentageFee(10000);
+        await feeManager.changeTokenMaxFee(mockToken.address, ethers.utils.parseEther('50'));
+
+        const getPercFee = await feeManager.getBridgeFee(
+            mockToken.address,
+            ethers.constants.AddressZero,
+            ethers.utils.parseEther('100'),
+            "0x4253430000000000000000000000000000000000000000000000000000000000",
+            ethers.constants.AddressZero
+        );
+        expect(getPercFee).to.eq(10000); // Should be 1%
+
+        // Max Fee
+        const getMaxFee = await feeManager.getBridgeFee(
+            mockToken.address,
+            ethers.constants.AddressZero,
+            ethers.utils.parseEther('100000'),
+            "0x4253430000000000000000000000000000000000000000000000000000000000",
+            ethers.constants.AddressZero
+        );
+        expect(getMaxFee).to.eq(500); // should be 0.05%
+    });
+    it('Get Fee Base', async () => {
+        const { feeManager } = await snapshot();
+
+        // Should always be the constant (1 000 000)
+        const getFeeBase = await feeManager.getFeeBase();
+        expect(getFeeBase).to.eq(1000000);
+    });
+    it('Bridge with fee (max and fixed)', async () => {
+        const { feeManager, tokenFactory, otherAddress1, otherAddress2, deployer } = await snapshot();
+
+        const bridgeFactory = new RadarBridge__factory(deployer);
+        const bridgeProxyFactory = new RadarBridgeProxy__factory(deployer);
+
+        const ethBridgeLib = await bridgeFactory.deploy();
+        const bscBridgeLib = await bridgeFactory.deploy();
+
+        const initInterface = new ethers.utils.Interface(["function initialize(bytes32 _chain)"]);
+        const ethBridgeProxy = await bridgeProxyFactory.deploy(
+            initInterface.encodeFunctionData("initialize", [ethers.utils.formatBytes32String("ETH")]),
+            ethBridgeLib.address
+        );
+        const bscBridgeProxy = await bridgeProxyFactory.deploy(
+            initInterface.encodeFunctionData("initialize", [ethers.utils.formatBytes32String("BSC")]),
+            bscBridgeLib.address
+        );
+
+        const ethBridge = bridgeFactory.attach(ethBridgeProxy.address);
+        const bscBridge = bridgeFactory.attach(bscBridgeProxy.address);
+
+        const ethToken = await tokenFactory.deploy("Radar ETH", "RADARETH", 18, otherAddress2.address, true);
+        const bscToken = await tokenFactory.deploy("Radar BSC", "RADARBSC", 18, bscBridge.address, true);
+
+        await ethToken.connect(deployer).mint(otherAddress2.address, ethers.utils.parseEther('100'));
+        await bscToken.connect(deployer).mint(otherAddress2.address, ethers.utils.parseEther('100000'));
+
+        await ethBridge.connect(deployer).addSupportedToken(
+            ethToken.address,
+            false,
+            ethers.utils.formatBytes32String("RADAR"),
+            otherAddress1.address
+        );
+        await ethToken.connect(deployer).mint(ethBridge.address, ethers.utils.parseEther('10000000'));
+        await bscBridge.attach(bscBridge.address).connect(deployer).addSupportedToken(
+            bscToken.address,
+            true,
+            ethers.utils.formatBytes32String("RADAR"),
+            otherAddress1.address
+        );
+
+        await ethBridge.changeFeeManager(feeManager.address);
+        await bscBridge.changeFeeManager(feeManager.address);
+
+        await feeManager.changeTokenMaxFee(ethToken.address, ethers.utils.parseEther('50'));
+        await feeManager.changeTokenMaxFee(bscToken.address, ethers.utils.parseEther('50'));
+
+        const initialEthBal = await ethToken.balanceOf(feeManager.address);
+        expect(initialEthBal).to.eq(0);
+
+        await ethToken.connect(otherAddress2).approve(ethBridge.address, ethers.utils.parseEther('100'));
+        const bridgeTx = await ethBridge.connect(otherAddress2).bridgeTokens(
+            ethToken.address,
+            ethers.utils.parseEther('100'),
+            ethers.utils.formatBytes32String('BSC'),
+            otherAddress2.address
+        );
+        const bridgeReceipt = await bridgeTx.wait();
+        const lockedEvent = bridgeReceipt.events![bridgeReceipt.events!.length-1];
+        const signature = await getBridgeSignature(
+            otherAddress1,
+            "RADAR",
+            lockedEvent.args![6],
+            "ETH",
+            "BSC",
+            "dsacacscascad",
+            lockedEvent.args![3],
+            lockedEvent.args![4]
+        );
+
+        const afterEthBal = await ethToken.balanceOf(feeManager.address);
+        expect(afterEthBal).to.eq(ethers.utils.parseEther('1'));
+        const afterUserEthBal = await ethToken.balanceOf(otherAddress2.address);
+        expect(afterUserEthBal).to.eq(0);
+
+        await bscBridge.connect(otherAddress2).claimTokens(
+            ethers.utils.formatBytes32String("RADAR"),
+            lockedEvent.args![6],
+            ethers.utils.formatBytes32String("ETH"),
+            ethers.utils.formatBytes32String("BSC"),
+            lockedEvent.args![4],
+            ethers.utils.formatBytes32String("dsacacscascad"),
+            otherAddress2.address,
+            signature
+        );
+
+        const afterUserBscBal = await bscToken.balanceOf(otherAddress2.address);
+        expect(afterUserBscBal).to.eq(ethers.utils.parseEther('100099'));
+
+        const bridgeTx2 = await bscBridge.connect(otherAddress2).bridgeTokens(
+            bscToken.address,
+            ethers.utils.parseEther('100099'),
+            ethers.utils.formatBytes32String("ETH"),
+            otherAddress2.address
+        );
+
+        const bridgeReceipt2 = await bridgeTx2.wait();
+        const lockedEvent2 = bridgeReceipt2.events![bridgeReceipt2.events!.length-1];
+        const signature2 = await getBridgeSignature(
+            otherAddress1,
+            "RADAR",
+            lockedEvent2.args![6],
+            "BSC",
+            "ETH",
+            "dsacacscascadd",
+            lockedEvent2.args![3],
+            lockedEvent2.args![4]
+        );
+
+        const afterBscBal = await bscToken.balanceOf(otherAddress2.address);
+        expect(afterBscBal).to.eq(0);
+
+        var afterBscFeeManagerBal = await bscToken.balanceOf(feeManager.address);
+        afterBscFeeManagerBal = afterBscFeeManagerBal.div(BigNumber.from((10**16).toString()));
+        expect(afterBscFeeManagerBal).to.be.closeTo(BigNumber.from('5000'), 10);
+
+        await ethBridge.connect(otherAddress2).claimTokens(
+            ethers.utils.formatBytes32String("RADAR"),
+            lockedEvent2.args![6],
+            ethers.utils.formatBytes32String("BSC"),
+            ethers.utils.formatBytes32String("ETH"),
+            lockedEvent2.args![4],
+            ethers.utils.formatBytes32String("dsacacscascadd"),
+            otherAddress2.address,
+            signature2
+        );
+
+        var finalBscTokenBal = await ethToken.balanceOf(otherAddress2.address);
+        finalBscTokenBal = finalBscTokenBal.div(BigNumber.from((10**16).toString()));
+        expect(finalBscTokenBal).to.be.closeTo(BigNumber.from('10004900'), 10);
+    });
 });

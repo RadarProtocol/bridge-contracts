@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract FeeManagerV1 is IRadarBridgeFeeManager {
     mapping(address => uint256) private maxTokenFee;
-    uint256 constant FEE_BASE = 10000;
+    uint256 constant FEE_BASE = 1000000;
     address private owner;
 
     uint256 private percentageFee;
@@ -58,9 +58,9 @@ contract FeeManagerV1 is IRadarBridgeFeeManager {
     // Fee Manager Functions
 
     function getBridgeFee(address _token, address, uint256 _amount, bytes32, address) external override view returns (uint256) {
-        uint256 _percFee = (_amount * percentageFee);
+        uint256 _percFee = percentageFee;
 
-        if ((_percFee / FEE_BASE) > maxTokenFee[_token]) {
+        if (((_amount * _percFee) / FEE_BASE) > maxTokenFee[_token]) {
             if (_amount != 0) {
                 _percFee = (maxTokenFee[_token] * FEE_BASE) / _amount;
             } else {
