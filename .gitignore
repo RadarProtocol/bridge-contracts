@@ -10,5 +10,6 @@ artifacts
 .vscode
 
 deployments
+deployments_backup
 
 **/.DS_Store
