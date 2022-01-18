@@ -1,7 +1,7 @@
 import { ethers, utils } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
 
-import { DeploymentConfig, saveConfig } from './../utils/config';
+import { DeploymentConfig, saveConfig } from '../utils/config';
 
 // General Configuration
 const ENABLED = false; // If this config is enabled or not
@@ -30,7 +30,7 @@ const feeManagerContract = "FeeManagerV1"; // Version of fee manager (ex: FeeMan
 const percentageFee = 10000; // Initial percentage fee (scaled) (ex: 10000 = 1% in FeeManagerV1)
 const initialMaxTokens = {
     "tokens": ['0xf9fbe825bfb2bf3e387af0dc18cac8d87f29dea8'],
-    "maxFees": [ethers.utils.parseEther('50')]
+    "maxFees": [ethers.utils.parseEther('100')]
 }; // Should have a `tokens` and `maxFees` keys with arrays
 
 const configuration: DeploymentConfig = {

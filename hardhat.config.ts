@@ -73,7 +73,7 @@ const config: HardhatUserConfig = {
       accounts: accounts('ethereum'),
       url: node('ethereum'),
       timeout: 259200000,
-      gasPrice: 130000000000,
+      gasPrice: 100000000000,
       gasMultiplier: 1.1
     },
     bsc: {
@@ -94,7 +94,7 @@ const config: HardhatUserConfig = {
       accounts: accounts('fantom'),
       url: node('fantom'),
       timeout: 259200000,
-      gasPrice: 500000000000,
+      gasPrice: 1000000000000,
       gasMultiplier: 1.1
     },
     avaxc: {
