@@ -1,4 +1,4 @@
-import { constants } from 'ethers';
+import { constants, ethers } from 'ethers';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 
@@ -29,7 +29,11 @@ export interface DeploymentConfig {
   TokenDecimals: Number,
   NetworkProxyBridgeAddress: string,
   TokenHasMigration: boolean,
-  OldTokenForMigration: string
+  OldTokenForMigration: string,
+  deployFeeManager: boolean,
+  feeManagerContract: string,
+  percentageFee: Number,
+  initialMaxTokens: { tokens: Array<string>, maxFees: Array<ethers.BigNumberish> }
 }
 
 const fn: DeployFunction = async () => {
