@@ -6,6 +6,7 @@ import "./utils/SignatureLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IRadarBridgeFeeManager.sol";
+import "./../extra/IOwnedToken.sol";
 
 contract RadarBridge {
 
@@ -129,6 +130,15 @@ contract RadarBridge {
 
     function changeFeeManager(address _newFeeManager) external onlyOwner {
         feeManager = _newFeeManager;
+    }
+
+    // Accept/pass ownership for other tokens
+    function claimTokenOwnership(address _token) external onlyOwner {
+        IOwnedToken(_token).claimOwnership();
+    }
+
+    function passTokenOwnership(address _token, address _newOwner) external onlyOwner {
+        IOwnedToken(_token).transferOwnership(_newOwner);
     }
     
     // Bridge Functions

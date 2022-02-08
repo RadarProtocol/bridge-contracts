@@ -7,9 +7,9 @@ import { DeploymentConfig, saveConfig } from './config';
 const ENABLED = false; // If this config is enabled or not
 const isDevDeploy = false; // Should always be false, only true when deploying to hardhat forks
 const NETWORK = 1;// Network ID of deployment
-const DEPLOYMENT_TYPE = ""; // Deployment type: CORE, TOKEN, TOKEN_MIGRATION, FEE_MANAGER
+const DEPLOYMENT_TYPE = ""; // Deployment type: CORE, TOKEN, TOKEN_MIGRATION, FEE_MANAGER, UPGRADE_BRIDGE
 
-// CORE
+// CORE & UPGRADE_BRIDGE
 const BridgeChainID = ""; // The chain's id (ex: ETH)
 const deployFeeManager = false; // Deploy a fee manager or not, must also complete CORE & FEE_MANAGER if true
 
@@ -22,7 +22,7 @@ const TokenHasMigration = false; // If token needs migration, also complete TOKE
 // TOKEN_MIGRATOR
 const OldTokenForMigration = ""; // The old token for the migration
 
-// TOKEN_MIGRATOR & TOKEN & FEE_MANAGER
+// TOKEN_MIGRATOR & TOKEN & FEE_MANAGER & UPGRADE_BRIDGE
 const NetworkProxyBridgeAddress = ethers.constants.AddressZero; // Address of Bridge (Proxy)
 
 // CORE & FEE_MANAGER (CORE only if deployFeeManager is true)
