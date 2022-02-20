@@ -57,15 +57,24 @@
 * RADAR: Whichever is lower than
     - `100` RADAR
     - `1%` of amount bridged
+* HYVE: Whichever is lower than
+    - `100` HYVE
+    - `1%` of amount bridged
 
 ## BSC
 * RADAR: Whichever is lower than
     - `100` RADAR
     - `1%` of amount bridged
+* HYVE: Whichever is lower than
+    - `100` HYVE
+    - `1%` of amount bridged
 
 ## POLYGON
 * RADAR: Whichever is lower than
     - `100` RADAR
+    - `1%` of amount bridged
+* HYVE: Whichever is lower than
+    - `100` HYVE
     - `1%` of amount bridged
 
 ## FANTOM
