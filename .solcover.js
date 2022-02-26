@@ -1,5 +1,5 @@
 module.exports = {
-    skipFiles: ['mock/'],
+    skipFiles: ['mock/', 'extra/utils/'],
     configureYulOptimizer: true,
     solcOptimizerDetails: {
         peephole: false,
