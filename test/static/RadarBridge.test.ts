@@ -1,9 +1,8 @@
 import { expect } from "chai";
-import { ethers } from "ethers";
-import { RadarBridge__factory, BridgedToken__factory, RadarBridgeProxy__factory, MockFeeManager__factory } from "../../typechain";
+import { ethers } from "hardhat";
 
 const generateBridgeSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     signData: string
 ): Promise<string> => {
     const messageBytes = ethers.utils.arrayify(signData);
@@ -12,7 +11,7 @@ const generateBridgeSignature = async (
 }
 
 const getNewRouterSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     _tokenId: string,
     _newRouter: string,
     _chain: string
@@ -29,14 +28,14 @@ const getNewRouterSignature = async (
 }
 
 const getBridgeSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     _tokenId: string,
-    _amount: ethers.BigNumber,
+    _amount: any,
     _srcChain: string,
     _destChain: string,
     _nonce: string,
     _destAddress: string,
-    _srcTimestamp: ethers.BigNumber
+    _srcTimestamp: any
 ): Promise<string> => {
     const signData = ethers.utils.solidityKeccak256(["bytes32", "uint256", "bytes32", "bytes32", "uint256", "bytes32", "address"], [
         ethers.utils.formatBytes32String(_tokenId),
@@ -53,30 +52,10 @@ const getBridgeSignature = async (
 }
 
 const snapshot = async () => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
-    const deployer = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/0`
-    ).connect(provider);
-    const ethTokenHolder = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/1`
-    ).connect(provider);
-    const bscTokenHolder = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/2`
-    ).connect(provider);
-    const router = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/3`
-    ).connect(provider);
-    const randomAddress = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/4`
-    ).connect(provider);
+    const [deployer, ethTokenHolder, bscTokenHolder, router, randomAddress] = await ethers.getSigners();
 
-    const bridgeFactory = new RadarBridge__factory(deployer);
-    const bridgeProxyFactory = new RadarBridgeProxy__factory(deployer);
+    const bridgeFactory = await ethers.getContractFactory("RadarBridge");
+    const bridgeProxyFactory = await ethers.getContractFactory("RadarBridgeProxy");
 
     const ethBridgeLib = await bridgeFactory.deploy();
     const bscBridgeLib = await bridgeFactory.deploy();
@@ -94,7 +73,7 @@ const snapshot = async () => {
     const ethBridge = bridgeFactory.attach(ethBridgeProxy.address);
     const bscBridge = bridgeFactory.attach(bscBridgeProxy.address);
 
-    const tokenFactory = new BridgedToken__factory(deployer);
+    const tokenFactory = await ethers.getContractFactory("BridgedToken");
     const ethToken = await tokenFactory.deploy("Radar ETH", "RADARETH", 18, randomAddress.address, true);
     const bscToken = await tokenFactory.deploy("Radar BSC", "RADARBSC", 18, bscBridge.address, true);
 
@@ -275,6 +254,13 @@ describe("Radar Bridge", () => {
             "Unauthorized"
         );
         await expect(bscBridge.connect(ethTokenHolder).changeFeeManager(ethers.constants.AddressZero)).to.be.revertedWith(
+            "Unauthorized"
+        );
+
+        await expect(ethBridge.connect(ethTokenHolder).claimTokenOwnership(ethers.constants.AddressZero)).to.be.revertedWith(
+            "Unauthorized"
+        );
+        await expect(ethBridge.connect(ethTokenHolder).passTokenOwnership(ethers.constants.AddressZero, ethers.constants.AddressZero)).to.be.revertedWith(
             "Unauthorized"
         );
 
@@ -587,7 +573,7 @@ describe("Radar Bridge", () => {
         } = await snapshot();
 
         // Deploy mock fee manager with 5% fee
-        const feeManagerFactory = new MockFeeManager__factory(deployer);
+        const feeManagerFactory = await ethers.getContractFactory("MockFeeManager");
         const feeManager = await feeManagerFactory.deploy();
         await ethBridge.connect(deployer).changeFeeManager(feeManager.address);
         await bscBridge.connect(deployer).changeFeeManager(feeManager.address);
@@ -677,7 +663,7 @@ describe("Radar Bridge", () => {
         } = await snapshot();
 
         // Deploy mock fee manager with 5% fee
-        const feeManagerFactory = new MockFeeManager__factory(deployer);
+        const feeManagerFactory = await ethers.getContractFactory("MockFeeManager");
         const feeManager = await feeManagerFactory.deploy();
         await ethBridge.connect(deployer).changeFeeManager(feeManager.address);
         await bscBridge.connect(deployer).changeFeeManager(feeManager.address);
@@ -754,16 +740,196 @@ describe("Radar Bridge", () => {
         const bscTokenBalanceAfterClaim = await ethToken.balanceOf(bscTokenHolder.address);
         expect(bscTokenBalanceAfterClaim).to.equal(ethers.utils.parseEther('95'));
     });
-
-    it("For other tests", async () => {
+    it("Remove Supported Token", async () => {
         const {
+            ethBridge,
+            router
+        } = await snapshot();
+
+        const tokenFactory = await ethers.getContractFactory("BridgedToken");
+        const token = await tokenFactory.deploy(
+            "TEST",
+            "TEST",
+            18,
+            ethBridge.address,
+            false
+        );
+
+        const getTokenId1 = await ethBridge.getTokenId(token.address)
+        expect(getTokenId1).to.eq(ethers.utils.formatBytes32String(""));
+        const getTokenById1 = await ethBridge.getTokenById(ethers.utils.formatBytes32String("TEST"));
+        expect(getTokenById1).to.eq(ethers.constants.AddressZero);
+        const getIsSupportedToken1 = await ethBridge.getIsSupportedToken(token.address);
+        expect(getIsSupportedToken1).to.eq(false);
+        const getSupportedTokensLenght1 = await ethBridge.getSupportedTokensLength();
+        expect(getSupportedTokensLenght1).to.eq(1);
+
+        await expect(ethBridge.removeSupportedToken(token.address)).to.be.revertedWith(
+            "Token is not supported"
+        );
+
+        await ethBridge.addSupportedToken(
+            token.address,
+            true,
+            ethers.utils.formatBytes32String("TEST"),
+            router.address
+        );
+
+        const getTokenId2 = await ethBridge.getTokenId(token.address)
+        expect(getTokenId2).to.eq(ethers.utils.formatBytes32String("TEST"));
+        const getTokenById2 = await ethBridge.getTokenById(ethers.utils.formatBytes32String("TEST"));
+        expect(getTokenById2).to.eq(token.address);
+        const getIsSupportedToken2 = await ethBridge.getIsSupportedToken(token.address);
+        expect(getIsSupportedToken2).to.eq(true);
+        const getSupportedTokensLenght2 = await ethBridge.getSupportedTokensLength();
+        expect(getSupportedTokensLenght2).to.eq(2);
+        const getSupportedToken2 = await ethBridge.getSupportedTokenByIndex(1);
+        expect(getSupportedToken2).to.eq(token.address);
+
+        await ethBridge.removeSupportedToken(token.address);
+
+        const getTokenId3 = await ethBridge.getTokenId(token.address)
+        expect(getTokenId3).to.eq(ethers.utils.formatBytes32String(""));
+        const getTokenById3 = await ethBridge.getTokenById(ethers.utils.formatBytes32String("TEST"));
+        expect(getTokenById3).to.eq(ethers.constants.AddressZero);
+        const getIsSupportedToken3 = await ethBridge.getIsSupportedToken(token.address);
+        expect(getIsSupportedToken3).to.eq(false);
+        const getSupportedTokensLenght3 = await ethBridge.getSupportedTokensLength();
+        expect(getSupportedTokensLenght3).to.eq(1);
+    });
+    it("Bridge Tokens Corrupt Fee Manager", async () => {
+        const {
+            router,
             ethBridge,
             bscBridge,
             ethTokenHolder,
-            bscTokenHolder,
             ethToken,
-            bscToken,
+            bscToken
+        } = await snapshot();
+
+        await ethBridge.changeFeeManager(bscBridge.address); // Corrupt fee manager
+
+        // Bridge 100 tokens
+
+        await ethToken.connect(ethTokenHolder).approve(ethBridge.address, ethers.utils.parseEther('100'));
+
+        // API TESTS or LOCAL SIG TEST
+
+        // API TESTS
+
+        // LOCAL SIG TEST
+        const bridgeTx = await ethBridge.connect(ethTokenHolder).bridgeTokens(
+            ethToken.address,
+            ethers.utils.parseEther('100'),
+            ethers.utils.formatBytes32String("BSC"),
+            ethTokenHolder.address
+        );
+        const bridgeReceipt = await bridgeTx.wait();
+        console.log(`With fee 0% (ETH -> BSC): contract ${ethBridge.address} and tx: ${bridgeReceipt.transactionHash}`);
+
+        const lockedEvent = bridgeReceipt.events![bridgeReceipt.events!.length-1];
+        const signature = await getBridgeSignature(
+            router,
+            "RADAR",
+            lockedEvent.args![6],
+            "ETH",
+            "BSC",
+            "dsacacscascad",
+            lockedEvent.args![3],
+            lockedEvent.args![4]
+        );
+        const signatureInvalid = await getBridgeSignature(
+            ethTokenHolder,
+            "RADAR",
+            lockedEvent.args![6],
+            "ETH",
+            "BSC",
+            "dsacacscascad",
+            lockedEvent.args![3],
+            lockedEvent.args![4]
+        );
+
+        const getEthBalanceAfterBridge = await ethToken.balanceOf(ethTokenHolder.address);
+        expect(getEthBalanceAfterBridge).to.equal(0);
+        const getEthBalanceOfBridgeAfterBridge = await ethToken.balanceOf(ethBridge.address);
+        expect(getEthBalanceOfBridgeAfterBridge).to.equal(ethers.utils.parseEther('100'));
+
+        // Claim tokens BSC
+        await expect(bscBridge.connect(ethTokenHolder).claimTokens(
+            ethers.utils.formatBytes32String("RADAR"),
+            ethers.utils.parseEther('100'),
+            ethers.utils.formatBytes32String("ETH"),
+            ethers.utils.formatBytes32String("BSC"),
+            lockedEvent.args![4],
+            ethers.utils.formatBytes32String("dsacacscascad"),
+            ethTokenHolder.address,
+            signatureInvalid)).to.be.revertedWith(
+            "Router Signature Invalid"
+        );
+        await bscBridge.connect(ethTokenHolder).claimTokens(
+            ethers.utils.formatBytes32String("RADAR"),
+            ethers.utils.parseEther('100'),
+            ethers.utils.formatBytes32String("ETH"),
+            ethers.utils.formatBytes32String("BSC"),
+            lockedEvent.args![4],
+            ethers.utils.formatBytes32String("dsacacscascad"),
+            ethTokenHolder.address,
+            signature
+        );
+        const bscTokenBalanceAfterClaim = await bscToken.balanceOf(ethTokenHolder.address);
+        expect(bscTokenBalanceAfterClaim).to.equal(ethers.utils.parseEther('100'));
+        // Signature re-uses
+        await expect(bscBridge.connect(ethTokenHolder).claimTokens(
+            ethers.utils.formatBytes32String("RADAR"),
+            ethers.utils.parseEther('100'),
+            ethers.utils.formatBytes32String("ETH"),
+            ethers.utils.formatBytes32String("BSC"),
+            lockedEvent.args![4],
+            ethers.utils.formatBytes32String("dsacacscascad"),
+            ethTokenHolder.address,
+            signatureInvalid)).to.be.revertedWith(
+            "Double Spending"
+        );
+
+        // Wrong chain claim
+        await expect(ethBridge.connect(ethTokenHolder).claimTokens(
+            ethers.utils.formatBytes32String("RADAR"),
+            ethers.utils.parseEther('100'),
+            ethers.utils.formatBytes32String("ETH"),
+            ethers.utils.formatBytes32String("BSC"),
+            lockedEvent.args![4],
+            ethers.utils.formatBytes32String("dsacacscascad"),
+            ethTokenHolder.address,
+            signatureInvalid)).to.be.revertedWith(
+            "Claiming tokens on wrong chain"
+        );
+    });
+    it("Token Ownership Transfer", async () => {
+        const {
+            ethBridge,
             deployer
         } = await snapshot();
+        
+        const ownedTokenFactory = await ethers.getContractFactory("MockOwnedToken");
+        const ownedToken = await ownedTokenFactory.deploy();
+
+        const getOwner1 = await ownedToken.owner();
+        expect(getOwner1).to.eq(deployer.address);
+
+        await ownedToken.transferOwnership(ethBridge.address);
+        await ethBridge.claimTokenOwnership(ownedToken.address);
+
+        const getOwner2 = await ownedToken.owner();
+        expect(getOwner2).to.eq(ethBridge.address);
+
+        await ethBridge.passTokenOwnership(ownedToken.address, deployer.address);
+
+        const getPOwner = await ownedToken.pendingOwner();
+        expect(getPOwner).to.eq(deployer.address);
+
+        await ownedToken.connect(deployer).claimOwnership();
+
+        const getOwner3 = await ownedToken.owner();
+        expect(getOwner3).to.eq(deployer.address);
     });
 });

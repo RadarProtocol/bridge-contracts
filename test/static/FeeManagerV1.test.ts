@@ -1,9 +1,8 @@
 import { expect } from "chai";
-import { BigNumber, ethers } from "ethers";
-import { FeeManagerV1__factory, BridgedToken__factory, RadarBridgeProxy__factory, RadarBridge__factory } from "../../typechain";
+import { ethers } from "hardhat";
 
 const generateBridgeSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     signData: string
 ): Promise<string> => {
     const messageBytes = ethers.utils.arrayify(signData);
@@ -12,14 +11,14 @@ const generateBridgeSignature = async (
 }
 
 const getBridgeSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     _tokenId: string,
-    _amount: ethers.BigNumber,
+    _amount: any,
     _srcChain: string,
     _destChain: string,
     _nonce: string,
     _destAddress: string,
-    _srcTimestamp: ethers.BigNumber
+    _srcTimestamp: any
 ): Promise<string> => {
     const signData = ethers.utils.solidityKeccak256(["bytes32", "uint256", "bytes32", "bytes32", "uint256", "bytes32", "address"], [
         ethers.utils.formatBytes32String(_tokenId),
@@ -36,30 +35,18 @@ const getBridgeSignature = async (
 }
 
 const snapshot = async () => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
-    const deployer = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/0`
-    ).connect(provider);
-    const otherAddress1 = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/1`
-    ).connect(provider);
-    const otherAddress2 = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/2`
-    ).connect(provider);
+    const [deployer, otherAddress1, otherAddress2] = await ethers.getSigners();
     
 
     // CUSTOM
-    const factory = new FeeManagerV1__factory(deployer)
+    const factory = await ethers.getContractFactory("FeeManagerV1");
     const feeManager = await factory.deploy(
         10000, // 1%
         [],
         []
     );
 
-    const tokenFactory = new BridgedToken__factory(deployer);
+    const tokenFactory = await ethers.getContractFactory("BridgedToken");
     const mockToken = await tokenFactory.deploy("Radar ETH", "RADARETH", 18, otherAddress2.address, true);
 
     await mockToken.mint(deployer.address, ethers.utils.parseEther('1000'));
@@ -218,8 +205,8 @@ describe('FeeManagerV1', () => {
     it('Bridge with fee (max and fixed)', async () => {
         const { feeManager, tokenFactory, otherAddress1, otherAddress2, deployer } = await snapshot();
 
-        const bridgeFactory = new RadarBridge__factory(deployer);
-        const bridgeProxyFactory = new RadarBridgeProxy__factory(deployer);
+        const bridgeFactory = await ethers.getContractFactory("RadarBridge");
+        const bridgeProxyFactory = await ethers.getContractFactory("RadarBridgeProxy");
 
         const ethBridgeLib = await bridgeFactory.deploy();
         const bscBridgeLib = await bridgeFactory.deploy();
@@ -329,8 +316,8 @@ describe('FeeManagerV1', () => {
         expect(afterBscBal).to.eq(0);
 
         var afterBscFeeManagerBal = await bscToken.balanceOf(feeManager.address);
-        afterBscFeeManagerBal = afterBscFeeManagerBal.div(BigNumber.from((10**16).toString()));
-        expect(afterBscFeeManagerBal).to.be.closeTo(BigNumber.from('5000'), 10);
+        afterBscFeeManagerBal = afterBscFeeManagerBal.div(ethers.BigNumber.from((10**16).toString()));
+        expect(afterBscFeeManagerBal).to.be.closeTo(ethers.BigNumber.from('5000'), 10);
 
         await ethBridge.connect(otherAddress2).claimTokens(
             ethers.utils.formatBytes32String("RADAR"),
@@ -344,7 +331,22 @@ describe('FeeManagerV1', () => {
         );
 
         var finalBscTokenBal = await ethToken.balanceOf(otherAddress2.address);
-        finalBscTokenBal = finalBscTokenBal.div(BigNumber.from((10**16).toString()));
-        expect(finalBscTokenBal).to.be.closeTo(BigNumber.from('10004900'), 10);
+        finalBscTokenBal = finalBscTokenBal.div(ethers.BigNumber.from((10**16).toString()));
+        expect(finalBscTokenBal).to.be.closeTo(ethers.BigNumber.from('10004900'), 10);
+    });
+    it("Initialize with tokens", async () => {
+        const {
+            otherAddress1
+        } = await snapshot();
+
+        const fmFactory = await ethers.getContractFactory("FeeManagerV1");
+        const fm = await fmFactory.deploy(
+            100,
+            [otherAddress1.address],
+            [ethers.utils.parseEther('2500')]
+        );
+
+        const getMaxFee = await fm.getMaxFeeForToken(otherAddress1.address);
+        expect(getMaxFee).to.eq(ethers.utils.parseEther('2500'));
     });
 });

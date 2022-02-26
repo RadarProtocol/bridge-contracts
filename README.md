@@ -1,3 +1,6 @@
+[![codecov](https://codecov.io/gh/RadarProtocol/bridge-contracts/branch/main/graph/badge.svg?token=0KH0M0B4XY)](https://codecov.io/gh/RadarProtocol/bridge-contracts)
+[![CircleCI](https://circleci.com/gh/RadarProtocol/bridge-contracts/tree/main.svg?style=svg)](https://circleci.com/gh/RadarProtocol/bridge-contracts/tree/main)
+
 # DEPLOYMENTS
 ## ETHEREUM DEPLOYMENTS
 * BRIDGE LIB: `0x82963cEA61fa4EEc54C923056Cd1654c2980aF38`
