@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev-local": "npx hardhat node --show-accounts --no-deploy"
+    "dev-local": "npx hardhat node --show-accounts --no-deploy",
+    "test": "npx hardhat coverage"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

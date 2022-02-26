@@ -1,25 +1,12 @@
 import { expect } from "chai";
-import { ethers } from "ethers";
-import { BridgedToken__factory } from "../../typechain";
+import { ethers } from "hardhat";
 
 const snapshot = async (migratorToken: boolean) => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
-    const deployer = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/0`
-    ).connect(provider);
-    const otherAddress1 = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/1`
-    ).connect(provider);
-    const otherAddress2 = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/2`
-    ).connect(provider);
+    const [deployer, otherAddress1, otherAddress2] = await ethers.getSigners();
     
 
     // CUSTOM
-    const factory = new BridgedToken__factory(deployer);
+    const factory = await ethers.getContractFactory("BridgedToken");
     const bridgedToken = await factory.deploy(
         "Radar",
         "RADAR",

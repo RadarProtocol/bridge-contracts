@@ -1,9 +1,8 @@
 import { expect } from "chai";
-import { ethers } from "ethers";
-import { RadarBridge__factory, BridgedToken__factory, RadarBridgeProxy__factory, MockFeeManager__factory } from "../../typechain";
+import { ethers } from "hardhat";
 
 const generateBridgeSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     signData: string
 ): Promise<string> => {
     const messageBytes = ethers.utils.arrayify(signData);
@@ -12,7 +11,7 @@ const generateBridgeSignature = async (
 }
 
 const getNewRouterSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     _tokenId: string,
     _newRouter: string,
     _chain: string
@@ -29,14 +28,14 @@ const getNewRouterSignature = async (
 }
 
 const getBridgeSignature = async (
-    signer: ethers.Wallet,
+    signer: any,
     _tokenId: string,
-    _amount: ethers.BigNumber,
+    _amount: any,
     _srcChain: string,
     _destChain: string,
     _nonce: string,
     _destAddress: string,
-    _srcTimestamp: ethers.BigNumber
+    _srcTimestamp: any
 ): Promise<string> => {
     const signData = ethers.utils.solidityKeccak256(["bytes32", "uint256", "bytes32", "bytes32", "uint256", "bytes32", "address"], [
         ethers.utils.formatBytes32String(_tokenId),
@@ -53,30 +52,10 @@ const getBridgeSignature = async (
 }
 
 const snapshot = async () => {
-    const provider = new ethers.providers.JsonRpcProvider("http://localhost:8545");
-    const deployer = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/0`
-    ).connect(provider);
-    const ethTokenHolder = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/1`
-    ).connect(provider);
-    const bscTokenHolder = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/2`
-    ).connect(provider);
-    const router = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/3`
-    ).connect(provider);
-    const randomAddress = ethers.Wallet.fromMnemonic(
-        "test test test test test test test test test test test junk",
-        `m/44'/60'/0'/0/4`
-    ).connect(provider);
+    const [deployer, ethTokenHolder, bscTokenHolder, router, randomAddress] = await ethers.getSigners();
 
-    const bridgeFactory = new RadarBridge__factory(deployer);
-    const bridgeProxyFactory = new RadarBridgeProxy__factory(deployer);
+    const bridgeFactory = await ethers.getContractFactory("RadarBridge");
+    const bridgeProxyFactory = await ethers.getContractFactory("RadarBridgeProxy");
 
     const ethBridgeLib = await bridgeFactory.deploy();
     const bscBridgeLib = await bridgeFactory.deploy();
@@ -94,7 +73,7 @@ const snapshot = async () => {
     const ethBridge = bridgeFactory.attach(ethBridgeProxy.address);
     const bscBridge = bridgeFactory.attach(bscBridgeProxy.address);
 
-    const tokenFactory = new BridgedToken__factory(deployer);
+    const tokenFactory = await ethers.getContractFactory("BridgedToken");
     const ethToken = await tokenFactory.deploy("Radar ETH", "RADARETH", 18, randomAddress.address, true);
     const bscToken = await tokenFactory.deploy("Radar BSC", "RADARBSC", 18, bscBridge.address, true);
 
@@ -587,7 +566,7 @@ describe("Radar Bridge", () => {
         } = await snapshot();
 
         // Deploy mock fee manager with 5% fee
-        const feeManagerFactory = new MockFeeManager__factory(deployer);
+        const feeManagerFactory = await ethers.getContractFactory("MockFeeManager");
         const feeManager = await feeManagerFactory.deploy();
         await ethBridge.connect(deployer).changeFeeManager(feeManager.address);
         await bscBridge.connect(deployer).changeFeeManager(feeManager.address);
@@ -677,7 +656,7 @@ describe("Radar Bridge", () => {
         } = await snapshot();
 
         // Deploy mock fee manager with 5% fee
-        const feeManagerFactory = new MockFeeManager__factory(deployer);
+        const feeManagerFactory = await ethers.getContractFactory("MockFeeManager");
         const feeManager = await feeManagerFactory.deploy();
         await ethBridge.connect(deployer).changeFeeManager(feeManager.address);
         await bscBridge.connect(deployer).changeFeeManager(feeManager.address);
