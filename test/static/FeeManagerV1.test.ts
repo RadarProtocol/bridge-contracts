@@ -334,4 +334,19 @@ describe('FeeManagerV1', () => {
         finalBscTokenBal = finalBscTokenBal.div(ethers.BigNumber.from((10**16).toString()));
         expect(finalBscTokenBal).to.be.closeTo(ethers.BigNumber.from('10004900'), 10);
     });
+    it("Initialize with tokens", async () => {
+        const {
+            otherAddress1
+        } = await snapshot();
+
+        const fmFactory = await ethers.getContractFactory("FeeManagerV1");
+        const fm = await fmFactory.deploy(
+            100,
+            [otherAddress1.address],
+            [ethers.utils.parseEther('2500')]
+        );
+
+        const getMaxFee = await fm.getMaxFeeForToken(otherAddress1.address);
+        expect(getMaxFee).to.eq(ethers.utils.parseEther('2500'));
+    });
 });
